@@ -1,0 +1,24 @@
+{
+  "name": "ssd-rss-server",
+  "version": "1.0.0",
+  "description": "SSD RSS Server",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env ADD_KEY=du243Eo3 node --watch api/index.js",
+    "start": "cross-env ADD_KEY=du243Eo3 node api/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.8.2",
+    "@vercel/blob": "^0.27.0",
+    "cheerio": "^1.0.0-rc.12",
+    "feed": "^4.2.2",
+    "hono": "^4.1.0",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^23.11.1"
+  },
+  "packageManager": "pnpm@9.14.2+sha512.6e2baf77d06b9362294152c851c4f278ede37ab1eba3a55fda317a4a17b209f4dbb973fb250a77abc463a341fcb1f17f17cfa24091c4eb319cda0d9b84278387",
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}

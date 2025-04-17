@@ -1,0 +1,16 @@
+services:
+  rss-api:
+    # build: 
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: easychen/ai-rss:latest
+    container_name: rss-api
+    ports:
+      - "80:3000"
+    environment:
+      - ADD_KEY=${ADD_KEY}
+      - CACHE_MINUTES=${CACHE_MINUTES}
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./sdd:/app/api/sdd  # 修改挂载路径，因为现在在 server 目录下
+    restart: unless-stopped 

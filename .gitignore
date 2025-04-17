@@ -1,0 +1,7 @@
+node_modules
+.vercel
+sdd
+.env
+cache
+.DS_Store
+readlater
