@@ -192,7 +192,8 @@ export async function getFeed(name) {
 
   // 解析列表项
   const items = $(sdd.data_list.selector.css)
-  
+  console.log(`🎯 找到 ${items.length} 条数据 using selector: ${sdd.data_list.selector.css}`)
+
   // 处理 un_selectors - 移动到列表选择之后，items处理之前
   if (sdd.data_list.un_selectors && sdd.data_list.un_selectors.length > 0) {
     items.each((_, element) => {
