@@ -51,7 +51,7 @@ app.get('/rss/:name', async (c) => {
   const name = c.req.param('name')
   try {
     const feed = await getFeed(name)
-    c.header('Content-Type', 'application/xml')
+    c.header('Content-Type', 'application/rss+xml; charset=UTF-8')
     return c.body(feed)
   } catch (error) {
     console.error('Error:', error)
@@ -133,7 +133,7 @@ app.post('/add-sdd', async (c) => {
     return c.json({
       success: true,
       key: uniqueKey,
-      rss_url: `/rss/${uniqueKey}`
+      rss_url: `rss/${uniqueKey}`
     })
   } catch (error) {
     console.error('Error adding SDD:', error)
@@ -394,7 +394,7 @@ app.get('/read-later', async (c) => {
       });
     });
 
-    c.header('Content-Type', 'application/xml');
+    c.header('Content-Type', 'application/rss+xml; charset=UTF-8');
     return c.body(feed.rss2());
   } catch (error) {
     console.error('Error generating read-later feed:', error);
