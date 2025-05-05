@@ -23,6 +23,9 @@ importers:
       hono:
         specifier: ^4.1.0
         version: 4.6.14
+      iconv-lite:
+        specifier: ^0.6.3
+        version: 0.6.3
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
