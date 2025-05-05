@@ -4,6 +4,9 @@
   "description": "SSD RSS Server",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "cross-env ADD_KEY=du243Eo3 node --watch api/index.js",
     "start": "cross-env ADD_KEY=du243Eo3 node api/index.js"
