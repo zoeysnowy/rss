@@ -46,7 +46,7 @@ async function getPageHtml(sdd) {
   } else {
     
     // 原有的 fetch 方式
-   import iconv from 'iconv-lite';
+
    import { Buffer } from 'buffer';
    import fetch from 'node-fetch';  // 你项目里已安装
 
@@ -76,6 +76,10 @@ async function getPageHtml(sdd) {
     });
 
       const buffer = await response.arrayBuffer();
+
+       
+      // ✅ 动态导入 iconv-lite 并获取 default
+      const { default: iconv } = await import('iconv-lite');
 
       // 自动根据 sdd.encoding 设置编码，否则 fallback 为 utf-8
       
