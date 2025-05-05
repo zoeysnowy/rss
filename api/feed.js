@@ -79,7 +79,8 @@ async function getPageHtml(sdd) {
 
        
       // ✅ 动态导入 iconv-lite 并获取 default
-      const iconv = (await import('iconv-lite')).default;
+      const iconvModule = await import('iconv-lite');
+      const decode = iconvModule.default.decode || iconvModule.decode;
 
 
 
