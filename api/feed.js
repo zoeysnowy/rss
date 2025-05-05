@@ -44,13 +44,24 @@ async function getPageHtml(sdd) {
     await browser.close()
     return html
   } else {
+    
     // 原有的 fetch 方式
+    import iconv from 'iconv-lite';
+    import { Buffer } from 'buffer'; // node v18+ 内置，不用另外安装
+
+    // ...
+
     const response = await fetch(sdd.url, {
       headers: {
         'User-Agent': sdd.user_agent
-      }
-    })
-    return await response.text()
+    }
+    });
+
+    const buffer = await response.arrayBuffer();
+    const decoded = iconv.decode(Buffer.from(buffer), 'gb18030'); // 你也可以试试 gb2312
+
+    return decoded;
+
   }
 }
 
