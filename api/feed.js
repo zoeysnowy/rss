@@ -79,7 +79,8 @@ async function getPageHtml(sdd) {
 
        
       // ✅ 动态导入 iconv-lite 并获取 default
-      const { default: iconv } = await import('iconv-lite');
+      const iconv = (await import('iconv-lite')).default;
+
 
       // 自动根据 sdd.encoding 设置编码，否则 fallback 为 utf-8
       
