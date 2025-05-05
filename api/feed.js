@@ -47,27 +47,41 @@ async function getPageHtml(sdd) {
     
     // 原有的 fetch 方式
    import iconv from 'iconv-lite';
-   import { Buffer } from 'buffer'; // Node 18+ 内置
+   import { Buffer } from 'buffer';
+   import fetch from 'node-fetch';  // 你项目里已安装
 
-    ...
+   async function getPageHtml(sdd) {
+     if (sdd.suggest_fetch_method === 'headless') {
+      const browser = await puppeteer.launch({ headless: 'new' });
+      const page = await browser.newPage();
 
-    const response = await fetch(sdd.url, {
-      headers: {
-        'User-Agent': sdd.user_agent
+      if (sdd.viewport?.width && sdd.viewport?.height) {
+        await page.setViewport({ width: sdd.viewport.width, height: sdd.viewport.height });
       }
+
+      if (sdd.user_agent) {
+        await page.setUserAgent(sdd.user_agent);
+      }
+
+      await page.goto(sdd.url, { waitUntil: 'networkidle0' });
+      const html = await page.content();
+      await browser.close();
+      return html;
+
+    } else {
+      const response = await fetch(sdd.url, {
+        headers: {
+          'User-Agent': sdd.user_agent || 'Mozilla/5.0'
+        }
     });
 
     const buffer = await response.arrayBuffer();
-    let html;
 
-    // 判断是否需要用 gbk 解码（也兼容 gb2312）
-    if (sdd.encoding === 'gbk' || sdd.encoding === 'gb2312' || sdd.encoding === 'gb18030') {
-      html = iconv.decode(Buffer.from(buffer), sdd.encoding || 'gbk');
-    } else {
-      html = Buffer.from(buffer).toString(); // 默认 utf-8
-    }
+    // 自动根据 sdd.encoding 设置编码，否则 fallback 为 utf-8
+    const encoding = sdd.encoding || 'utf-8';
 
-    return html;
+    const decoded = iconv.decode(Buffer.from(buffer), encoding);
+    return decoded;
 
 
   }
