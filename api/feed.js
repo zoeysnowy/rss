@@ -68,12 +68,12 @@ async function getPageHtml(sdd) {
       await browser.close();
       return html;
 
-    } else {
+      } else {
       const response = await fetch(sdd.url, {
         headers: {
           'User-Agent': sdd.user_agent || 'Mozilla/5.0'
         }
-    });
+      });
 
       const buffer = await response.arrayBuffer();
 
