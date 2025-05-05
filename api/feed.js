@@ -46,21 +46,29 @@ async function getPageHtml(sdd) {
   } else {
     
     // 原有的 fetch 方式
-    import iconv from 'iconv-lite';
-    import { Buffer } from 'buffer'; // node v18+ 内置，不用另外安装
+   import iconv from 'iconv-lite';
+   import { Buffer } from 'buffer'; // Node 18+ 内置
 
-    // ...
+    ...
 
     const response = await fetch(sdd.url, {
       headers: {
         'User-Agent': sdd.user_agent
-    }
+      }
     });
 
     const buffer = await response.arrayBuffer();
-    const decoded = iconv.decode(Buffer.from(buffer), 'gb18030'); // 你也可以试试 gb2312
+    let html;
 
-    return decoded;
+    // 判断是否需要用 gbk 解码（也兼容 gb2312）
+    if (sdd.encoding === 'gbk' || sdd.encoding === 'gb2312' || sdd.encoding === 'gb18030') {
+      html = iconv.decode(Buffer.from(buffer), sdd.encoding || 'gbk');
+    } else {
+      html = Buffer.from(buffer).toString(); // 默认 utf-8
+    }
+
+    return html;
+
 
   }
 }
