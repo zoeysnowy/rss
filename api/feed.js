@@ -43,7 +43,7 @@ async function getPageHtml(sdd) {
     const html = await page.content()
     await browser.close()
     return html
-  } else {
+   } else {
     
     // 原有的 fetch 方式
 
@@ -68,7 +68,7 @@ async function getPageHtml(sdd) {
       await browser.close();
       return html;
 
-      } else {
+     } else {
       const response = await fetch(sdd.url, {
         headers: {
           'User-Agent': sdd.user_agent || 'Mozilla/5.0'
@@ -92,9 +92,9 @@ async function getPageHtml(sdd) {
       return decoded;
 
 
-   }
-  }
- } 
+     }
+    }
+  } 
 }
 
 // 缓存工具函数
