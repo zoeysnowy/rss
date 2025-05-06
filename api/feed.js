@@ -51,6 +51,7 @@ async function getPageHtml(sdd) {
 
     const encoding = sdd.encoding || 'utf-8';
     const decoded = iconv.decode(Buffer.from(buffer), encoding);
+    console.log('Sample Decoded Text:', decoded.slice(0, 100));
     return decoded;
   }
 }
