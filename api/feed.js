@@ -15,87 +15,47 @@ const __dirname = dirname(__filename);
 // 修改环境变量检查
 const isVercel = process.env.VERCEL === '1';
 
-// hello
+// getpagehtml
+
+import { Buffer } from 'buffer';
+import fetch from 'node-fetch'; // 你项目里已安装
+
 async function getPageHtml(sdd) {
   if (sdd.suggest_fetch_method === 'headless') {
-    const browser = await puppeteer.launch({
-      headless: 'new'
-    })
-    const page = await browser.newPage()
-    
-    // 设置 viewport
-    if (sdd.viewport && sdd.viewport.width && sdd.viewport.height) {
-      await page.setViewport({
-        width: sdd.viewport.width,
-        height: sdd.viewport.height
-      })
+    const browser = await puppeteer.launch({ headless: 'new' });
+    const page = await browser.newPage();
+
+    if (sdd.viewport?.width && sdd.viewport?.height) {
+      await page.setViewport({ width: sdd.viewport.width, height: sdd.viewport.height });
     }
-    
-    // 设置 user agent
+
     if (sdd.user_agent) {
-      await page.setUserAgent(sdd.user_agent)
+      await page.setUserAgent(sdd.user_agent);
     }
 
-    await page.goto(sdd.url, {
-      waitUntil: 'networkidle0'
-    })
-    
-    const html = await page.content()
-    await browser.close()
-    return html
-   } else {
-    
-    // 原有的 fetch 方式
+    await page.goto(sdd.url, { waitUntil: 'networkidle0' });
+    const html = await page.content();
+    await browser.close();
+    return html;
 
-   import { Buffer } from 'buffer';
-   import fetch from 'node-fetch';  // 你项目里已安装
-
-   async function getPageHtml(sdd) {
-     if (sdd.suggest_fetch_method === 'headless') {
-      const browser = await puppeteer.launch({ headless: 'new' });
-      const page = await browser.newPage();
-
-      if (sdd.viewport?.width && sdd.viewport?.height) {
-        await page.setViewport({ width: sdd.viewport.width, height: sdd.viewport.height });
+  } else {
+    const response = await fetch(sdd.url, {
+      headers: {
+        'User-Agent': sdd.user_agent || 'Mozilla/5.0'
       }
+    });
 
-      if (sdd.user_agent) {
-        await page.setUserAgent(sdd.user_agent);
-      }
+    const buffer = await response.arrayBuffer();
 
-      await page.goto(sdd.url, { waitUntil: 'networkidle0' });
-      const html = await page.content();
-      await browser.close();
-      return html;
+    const iconvModule = await import('iconv-lite');
+    const iconv = iconvModule.default;
 
-     } else {
-      const response = await fetch(sdd.url, {
-        headers: {
-          'User-Agent': sdd.user_agent || 'Mozilla/5.0'
-        }
-      });
-
-      const buffer = await response.arrayBuffer();
-
-       
-      // ✅ 动态导入 iconv-lite 并获取 default
-      const iconvModule = await import('iconv-lite');
-      const iconv = iconvModule.default;
-
-
-
-      // 自动根据 sdd.encoding 设置编码，否则 fallback 为 utf-8
-      
-
-      const encoding = sdd.encoding || 'utf-8';
-      const decoded = iconv.decode(Buffer.from(buffer), encoding);
-      return decoded;
-
-
-     }
-    }
-  } 
+    const encoding = sdd.encoding || 'utf-8';
+    const decoded = iconv.decode(Buffer.from(buffer), encoding);
+    return decoded;
+  }
 }
+
 
 // 缓存工具函数
 async function getCacheKey(name) {
