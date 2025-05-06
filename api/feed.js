@@ -18,7 +18,6 @@ const isVercel = process.env.VERCEL === '1';
 // getpagehtml
 
 import { Buffer } from 'buffer';
-import fetch from 'node-fetch'; // 你项目里已安装
 
 async function getPageHtml(sdd) {
   if (sdd.suggest_fetch_method === 'headless') {
