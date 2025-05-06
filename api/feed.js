@@ -217,22 +217,27 @@ async function setCache(name, content) {
 
 // URL处理工具函数
 function normalizeUrl(url, baseUrl) {
-  if (!url) return url;
+  if (!url) return null;
   
-  // 如果已经是完整URL，直接返回
-  if (url.startsWith('http')) {
+  // 如果已经是完整URL且有效，直接返回
+  try {
+    new URL(url);
     return url;
+  } catch (e) {
+    // 不是完整URL，继续处理
   }
   
   // 处理相对URL
   try {
     const base = new URL(baseUrl);
-    return new URL(url, base.origin).toString();
+    const resolvedUrl = new URL(url, base.origin);
+    return resolvedUrl.toString(); // 注意：这里不进行编码
   } catch (e) {
-    console.error('URL normalization error:', e);
-    return url;
+    console.error('URL normalization failed:', e);
+    return null;
   }
 }
+
 
 export async function getFeed(name) {
   // 检查缓存
@@ -326,12 +331,29 @@ export async function getFeed(name) {
       item[field] = value
     }
 
-    // 补全 URL
-    if (item.link && !item.link.startsWith('http')) {
-      const baseUrl = new URL(sdd.url)
-      item.link = item.link.startsWith('/') 
-        ? `${baseUrl.origin}${item.link}`
-        : `${baseUrl.origin}/${item.link}`
+    // 补全URL（安全版本）
+    if (item.link) {
+      try {
+        // 处理协议相对URL（以//开头）
+        if (item.link.startsWith('//')) {
+          item.link = new URL(sdd.url).protocol + item.link;
+        }
+        // 处理相对URL
+        else if (!item.link.startsWith('http')) {
+          const baseUrl = new URL(sdd.url);
+          // 使用URL构造函数自动处理路径拼接
+          item.link = new URL(item.link, baseUrl.origin).toString();
+          
+          // 或者手动处理（备选方案）
+          // item.link = baseUrl.origin + 
+          //   (item.link.startsWith('/') ? '' : '/') + 
+          //   encodeURI(item.link.replace(/^\//, ''));
+        }
+      } catch (e) {
+        console.error('URL补全失败:', e);
+        // 可以选择保留原样或设为null
+        item.link = null;
+      }
     }
 
     // 补全图片 URL
@@ -347,12 +369,15 @@ export async function getFeed(name) {
 
   // 添加到 Feed
   feedItems.forEach(item => {
+    
     const baseUrl = new URL(sdd.url);
+
+    console.log('最终使用的链接:', normalizeUrl(item[sdd.rss.items.link], baseUrl));
     
     feed.addItem({
       title: item[sdd.rss.items.title],
       id: item[sdd.rss.items.guid] || normalizeUrl(item[sdd.rss.items.link], baseUrl),
-      link: normalizeUrl(item[sdd.rss.items.link], baseUrl),
+      link: normalizeUrl(item[sdd.rss.items.link], baseUrl), // 确保这里没有 encodeURIComponent
       description: item[sdd.rss.items.description],
       date: item[sdd.rss.items.date] ? new Date(item[sdd.rss.items.date]) : new Date(),
       ...(sdd.rss.items.cover && item[sdd.rss.items.cover] && {
