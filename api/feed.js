@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer'
 import { head, put } from '@vercel/blob';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { fetchFullContent, embedImages } from './fullContentFetcher.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -367,8 +368,31 @@ export async function getFeed(name) {
     feedItems.push(item)
   })
 
+  // 在 items.each 循环后添加以下代码
+  const enhancedItems = [];
+  for (const item of feedItems) {
+    try {
+      if (sdd.fetch_full_content) {
+        const fullContent = await fetchFullContent(item[sdd.rss.items.link], {
+          userAgent: sdd.user_agent,
+          contentSelector: sdd.full_content_selector // 可选：在SDD配置中指定主要内容选择器
+        });
+        
+        // 将完整内容和图片嵌入到描述中
+        item[sdd.rss.items.description] = embedImages(
+          fullContent.content, 
+          fullContent.images
+        );
+      }
+      enhancedItems.push(item);
+    } catch (error) {
+      console.error(`Failed to fetch full content for ${item[sdd.rss.items.link]}:`, error);
+      enhancedItems.push(item); // 仍然添加原始item
+    }
+  }
+  
   // 添加到 Feed
-  feedItems.forEach(item => {
+  enhancedItems.forEach(item => {
     
     const baseUrl = new URL(sdd.url);
 
