@@ -218,8 +218,20 @@ async function setCache(name, content) {
 // URL处理工具函数
 function normalizeUrl(url, baseUrl) {
   if (!url) return url;
-  if (url.startsWith('http')) return url;
-  return `${baseUrl.protocol}//${url.replace(/^\/+/, '')}`;
+  
+  // 如果已经是完整URL，直接返回
+  if (url.startsWith('http')) {
+    return url;
+  }
+  
+  // 处理相对URL
+  try {
+    const base = new URL(baseUrl);
+    return new URL(url, base.origin).toString();
+  } catch (e) {
+    console.error('URL normalization error:', e);
+    return url;
+  }
 }
 
 export async function getFeed(name) {
@@ -340,7 +352,7 @@ export async function getFeed(name) {
     feed.addItem({
       title: item[sdd.rss.items.title],
       id: item[sdd.rss.items.guid] || normalizeUrl(item[sdd.rss.items.link], baseUrl),
-      link: encodeURIComponent(normalizeUrl(item[sdd.rss.items.link], baseUrl)),
+      link: normalizeUrl(item[sdd.rss.items.link], baseUrl),
       description: item[sdd.rss.items.description],
       date: item[sdd.rss.items.date] ? new Date(item[sdd.rss.items.date]) : new Date(),
       ...(sdd.rss.items.cover && item[sdd.rss.items.cover] && {
