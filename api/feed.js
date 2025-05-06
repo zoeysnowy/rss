@@ -20,39 +20,108 @@ const isVercel = process.env.VERCEL === '1';
 import { Buffer } from 'buffer';
 
 async function getPageHtml(sdd) {
-  if (sdd.suggest_fetch_method === 'headless') {
-    const browser = await puppeteer.launch({ headless: 'new' });
-    const page = await browser.newPage();
+  // 默认配置
+  const defaultConfig = {
+    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    encoding: 'gbk', // 中文网站常用gbk/gb18030编码
+    timeout: 30000, // 30秒超时
+    waitUntil: 'networkidle2' // 更宽松的加载条件
+  };
 
-    if (sdd.viewport?.width && sdd.viewport?.height) {
-      await page.setViewport({ width: sdd.viewport.width, height: sdd.viewport.height });
-    }
+  // 合并配置
+  const config = { ...defaultConfig, ...sdd };
 
-    if (sdd.user_agent) {
-      await page.setUserAgent(sdd.user_agent);
-    }
-
-    await page.goto(sdd.url, { waitUntil: 'networkidle0' });
-    const html = await page.content();
-    await browser.close();
-    return html;
-
-  } else {
-    const response = await fetch(sdd.url, {
-      headers: {
-        'User-Agent': sdd.user_agent || 'Mozilla/5.0'
-      }
+  if (config.suggest_fetch_method === 'headless') {
+    // Headless 模式抓取
+    const browser = await puppeteer.launch({ 
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] // Vercel 环境需要的参数
     });
+    
+    try {
+      const page = await browser.newPage();
+      
+      // 设置视窗和User-Agent
+      await page.setViewport({ 
+        width: config.viewport?.width || 1280, 
+        height: config.viewport?.height || 800 
+      });
+      
+      await page.setUserAgent(config.user_agent);
+      
+      // 设置请求拦截，避免加载不必要资源
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+          req.abort();
+        } else {
+          req.continue();
+        }
+      });
 
-    const buffer = await response.arrayBuffer();
+      // 导航并等待
+      await page.goto(config.url, { 
+        waitUntil: config.waitUntil,
+        timeout: config.timeout
+      });
+      
+      // 获取HTML内容
+      const html = await page.content();
+      return html;
+    } finally {
+      await browser.close();
+    }
+  } else {
+   
+    // 普通fetch模式
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+      
+      const response = await fetch(config.url, {
+        headers: {
+          'User-Agent': config.user_agent,
+          'Accept-Charset': 'gbk, utf-8;q=0.7, *;q=0.3',
+          'Accept': 'application/rss+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
 
-    const iconvModule = await import('iconv-lite');
-    const iconv = iconvModule.default;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    const encoding = sdd.encoding || 'utf-8';
-    const decoded = iconv.decode(Buffer.from(buffer), encoding);
-    console.log('Sample Decoded Text:', decoded.slice(0, 100));
-    return decoded;
+      const buffer = await response.arrayBuffer();
+      
+      // 动态导入iconv-lite
+      const iconv = (await import('iconv-lite')).default;
+      
+      // 尝试多种中文编码
+      const encodingsToTry = ['gbk', 'gb18030', 'gb2312', 'utf-8'];
+      let decodedContent = '';
+      
+      for (const encoding of encodingsToTry) {
+        try {
+          decodedContent = iconv.decode(Buffer.from(buffer), encoding);
+          // 简单验证是否解码成功（检查常见中文字符）
+          if (/[\u4e00-\u9fa5]/.test(decodedContent)) {
+            console.log(`Success with encoding: ${encoding}`);
+            console.log('Sample content:', decodedContent.substring(0, 200));
+            return decodedContent;
+          }
+        } catch (e) {
+          console.warn(`Failed with encoding ${encoding}:`, e.message);
+        }
+      }
+      
+      throw new Error('Failed to decode content with any of the tried encodings');
+      
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw new Error(`Failed to fetch ${config.url}: ${error.message}`);
+    }
   }
 }
 
